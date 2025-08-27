@@ -7,8 +7,6 @@
 #include "UObject/Object.h"
 #include "GridSystemSquare.generated.h"
 
-struct FGridNode;
-
 /**
  * 
  */
@@ -18,8 +16,10 @@ class TURNBASEDGRIDGAME_API UGridSystemSquare : public UGridSystemBase
 	GENERATED_BODY()
 	
 public:
+	virtual void Setup(int _sizeX, int _sizeY);
+	virtual void Setup(int _size) override;
 	virtual TArray<FIntVector2> GetNeighbourDirections() const override;
-	virtual TArray<FGridNode> GetNeighbours(FGridNode _gridNode) const override;
-	virtual int GetDistance(FGridNode _nodeA, FGridNode _nodeB) const override;
-	virtual FGridNode GetGridNodeAt(FIntVector2 _coords) const override;
+	virtual TArray<FGridNode> GetNeighbours(const FGridNode& _gridNode) const override;
+	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const override;
+	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const override;
 };

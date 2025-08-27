@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridNode.h"
 #include "UObject/Object.h"
 #include "GridSystemBase.generated.h"
-
-struct FGridNode;
 
 /**
  * 
@@ -16,10 +15,12 @@ class TURNBASEDGRIDGAME_API UGridSystemBase : public UObject
 {
 	GENERATED_BODY()
 public:
-	TArray<TArray<FGridNode>> m_grid; 
+	TArray<TArray<FGridNode>> m_grid;
+	int m_gridSize = 0;
 	
-	virtual TArray<FIntVector2> GetNeighbourDirections() const;
-	virtual TArray<FGridNode> GetNeighbours(FGridNode _gridNode) const;
-	virtual int GetDistance(FGridNode _nodeA, FGridNode _nodeB) const;
-	virtual FGridNode GetGridNodeAt(FIntVector2 _coords) const;
+	virtual void Setup(int _size) {}
+	virtual TArray<FIntVector2> GetNeighbourDirections() const { return TArray<FIntVector2>(); };
+	virtual TArray<FGridNode> GetNeighbours(const FGridNode& _gridNode) const { return TArray<FGridNode>(); }
+	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const { return 0; }
+	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const { return false; }
 };
