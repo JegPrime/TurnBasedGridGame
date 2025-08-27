@@ -27,7 +27,8 @@ void AGridManager::BeginPlay()
 		for (auto gridNode : gridLine)
 		{
 			const FVector tileLocation = GetTileLocation(gridNode);
-			GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
+			AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
+			spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 		}
 	}
 }

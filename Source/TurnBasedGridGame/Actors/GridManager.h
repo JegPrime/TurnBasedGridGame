@@ -27,7 +27,7 @@ private:
 	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
 	int m_gridSize = 3;
 	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
-	int m_gridTileSize = 1;
+	int m_gridTileSize = 100;
 	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
 	int m_gridTileScale = 1;
 
