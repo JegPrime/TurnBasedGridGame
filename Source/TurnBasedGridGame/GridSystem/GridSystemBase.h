@@ -23,4 +23,5 @@ public:
 	virtual TArray<FGridNode> GetNeighbours(const FGridNode& _gridNode) const { return TArray<FGridNode>(); }
 	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const { return 0; }
 	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const { return false; }
+	virtual const FVector GetRelativeLocationForNode(const FGridNode& _gridNode) const { return FVector::ZeroVector; }
 };

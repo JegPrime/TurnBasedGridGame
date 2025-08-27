@@ -61,3 +61,8 @@ bool UGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2&
 	_gridNode = m_grid[_coords.X][_coords.Y];
 	return true;
 }
+
+const FVector UGridSystemSquare::GetRelativeLocationForNode(const FGridNode& _gridNode) const
+{
+	return FVector(_gridNode.m_gridX, _gridNode.m_gridY, 0.f);
+}
