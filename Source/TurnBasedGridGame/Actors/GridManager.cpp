@@ -3,6 +3,11 @@
 
 #include "GridManager.h"
 
+#if WITH_EDITOR
+#include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetSystemLibrary.h"
+#endif
+
 // Sets default values
 AGridManager::AGridManager()
 {
@@ -16,6 +21,7 @@ void AGridManager::BeginPlay()
 	ensureMsgf(m_tileMeshActorClass != nullptr, TEXT("AGridManager::AGridManager - m_tileMesh is nullptr"));
 	ensureMsgf(m_gridSize > 1, TEXT("AGridManager::AGridManager - m_gridSize too small"));
 
+	RemoveGrid();
 	GenerateGrid();
 }
 
@@ -29,39 +35,94 @@ void AGridManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AGridManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+#if WITH_EDITOR
+	DrawMousePositionDebug();
+#endif
+}
+
+void AGridManager::GenerateGridPreview()
+{
+	RemoveGrid();
+	GenerateGrid();
+}
+
+void AGridManager::ClearGridPreview()
+{
+	RemoveGrid();
 }
 
 const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
 {
 	const FVector tileLocation = m_gridSystem->GetRelativeLocationForNode(_gridNode) * m_gridTileScale;
-	return tileLocation + m_tileDisplacement + GetActorLocation();
+	return tileLocation + GetActorLocation() + (m_useTileMeshOffset ? m_tileDisplacement : FVector::ZeroVector);
+}
+
+const FVector AGridManager::GetTileLocation(const FIntVector2& _coords) const
+{
+	const FVector tileLocation = m_gridSystem->GetLocationAtCoords(_coords) * m_gridTileScale;
+	return tileLocation + GetActorLocation() + (m_useTileMeshOffset ? m_tileDisplacement : FVector::ZeroVector);
 }
 
 const FIntVector2 AGridManager::GetTileCoordsAtLocation(const FVector& _location) const
 {
-	return FIntVector2(_location.X / m_gridTileScale, _location.Y / m_gridTileScale);
+	return m_gridSystem->GetCoordsAtLocation((GetActorLocation() +  _location + (m_useTileMeshOffset || m_useSingleMesh ? FVector::ZeroVector : m_tileDisplacement)) / m_gridTileScale);
 }
+
+#if WITH_EDITOR
+void AGridManager::DrawMousePositionDebug() const
+{
+	//Debug for tile location code
+	if (auto playerController = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+	{
+		FVector WorldLocation;
+		FVector WorldDirection;
+		if (playerController->DeprojectMousePositionToWorld(WorldLocation, WorldDirection))
+		{
+			FVector cursorLocation = FMath::LinePlaneIntersection(WorldLocation, WorldLocation + WorldDirection, GetActorLocation(), FVector::UpVector);
+			UKismetSystemLibrary::PrintString(this, FString::Format(TEXT("CursorTouchLocation : {0} x {1}"), {cursorLocation.X, cursorLocation.Y}), true, false, FLinearColor::Green, 0.f, "CursorTouchLocation");
+
+			FIntVector2 cursorCoords = GetTileCoordsAtLocation(cursorLocation);
+			UKismetSystemLibrary::PrintString(this, FString::Format(TEXT("CursorTileCoords : {0} x {1}"), {cursorCoords.X, cursorCoords.Y}), true, false, FLinearColor::Green, 0.f, "CursorTileCoords");
+
+			FVector cursorTileLocation = GetTileLocation(cursorCoords);
+			UKismetSystemLibrary::PrintString(this, FString::Format(TEXT("CursorTileLocation : {0} x {1}"), {cursorTileLocation.X, cursorTileLocation.Y}), true, false, FLinearColor::Green, 0.f, "CursorTileLocation");
+		}
+	}
+}
+#endif
 
 void AGridManager::GenerateGrid()
 {
-	m_gridSystem = new FGridSystemSquare(m_gridSize);
+	FVector tileScaleCorrection = FVector(m_gridTileScale,
+										  m_gridTileScale,
+										  1);
+	if (const AActor* tileCDO = m_tileMeshActorClass.GetDefaultObject())
+	{
+		if (UStaticMeshComponent* staticMeshComponent = tileCDO->GetComponentByClass<UStaticMeshComponent>())
+		{
+			FVector min,max = FVector::ZeroVector;
+			staticMeshComponent->GetLocalBounds(min, max);
+			tileScaleCorrection *= FVector(1 / FMath::Abs(max.X - min.X),
+										   1 / FMath::Abs(max.Y - min.Y),
+										   1);
+		}
+	}
+	
+	m_gridSystem = new FGridSystemSquare(m_gridSize, m_gridSize, true);
 	if (m_useSingleMesh)
 	{
-		const FVector gridSize = FVector(	m_gridSize * m_gridTileScale,
-											m_gridSize * m_gridTileScale,
-											0);
-		const FVector actorLocation = GetActorLocation() + gridSize / 2;
-		AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &actorLocation);
+		const FVector gridExtent = FVector(m_gridSize * m_gridTileScale,
+										   m_gridSize * m_gridTileScale,
+										   0);
+		const FVector modifiedActorLocation = GetActorLocation() + gridExtent / 2;
+		AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &modifiedActorLocation);
 		if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 		{
 			if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
 			{
-				FVector min,max = FVector::ZeroVector;
-				mesh->GetLocalBounds(min, max);
-				FVector scaledSizeVector = FVector(	gridSize.X / FMath::Abs(max.X - min.X),
-													gridSize.Y / FMath::Abs(max.Y - min.Y),
-													1);
-				mesh->SetWorldScale3D(scaledSizeVector);
+				const FVector scaledMeshSize = m_gridSize * tileScaleCorrection;
+				mesh->SetWorldScale3D(FVector(scaledMeshSize.X, scaledMeshSize.Y, 1));
 				mesh->SetCustomPrimitiveDataFloat(0, m_gridSize);
 				mesh->SetCustomPrimitiveDataFloat(1, m_gridSize);
 			}
@@ -78,16 +139,7 @@ void AGridManager::GenerateGrid()
 				AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
 				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 				{
-					FVector gridScale = FVector::One();
-					if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
-					{
-						FVector min,max = FVector::ZeroVector;
-						mesh->GetLocalBounds(min, max);
-						gridScale = FVector(	1 / FMath::Abs(max.X - min.X),
-												1 / FMath::Abs(max.Y - min.Y),
-												1);
-					}
-					spawnedActor->SetActorScale3D(FVector(m_gridTileScale * gridScale.X, m_gridTileScale * gridScale.Y, 1));
+					spawnedActor->SetActorScale3D(tileScaleCorrection);
 					spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 				}
 				m_gridSystemActors.Add(spawnedActor);

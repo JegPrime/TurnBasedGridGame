@@ -11,8 +11,8 @@
 class TURNBASEDGRIDGAME_API FGridSystemSquare : public FGridSystemBase
 {
 public:
-	explicit FGridSystemSquare(const int _size);
-	explicit FGridSystemSquare(const int _sizeX, const int _sizeY);
+	explicit FGridSystemSquare(const int _sizeX, const int _sizeY, const bool _doSetup = false);
+	explicit FGridSystemSquare(const int _size, const bool _doSetup = false) : FGridSystemSquare(_size, _size, _doSetup) {};
 	
 	virtual void Setup(int _sizeX, int _sizeY);
 	virtual void Setup(int _size) override;
@@ -21,6 +21,8 @@ public:
 	virtual TArray<FIntVector2> GetNeighbourCoords(const FIntVector2& _gridNode) const override;
 	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const override;
 	virtual int GetDistance(const FIntVector2& _nodeA, const FIntVector2& _nodeB) const override;
+	virtual FIntVector2 GetCoordsAtLocation(const FVector& _location) const override;
+	virtual FVector GetLocationAtCoords(const FIntVector2& _location) const override;
 	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const override;
 	virtual const FVector GetRelativeLocationForNode(const FGridNode& _gridNode) const override;
 };

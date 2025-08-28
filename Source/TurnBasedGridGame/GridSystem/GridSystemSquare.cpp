@@ -3,14 +3,12 @@
 #include "GridSystemSquare.h"
 #include "GridNode.h"
 
-FGridSystemSquare::FGridSystemSquare(const int _size)
+FGridSystemSquare::FGridSystemSquare(const int _sizeX, const int _sizeY, const bool _doSetup)
 {
-	FGridSystemSquare::Setup(_size);
-}
-
-FGridSystemSquare::FGridSystemSquare(const int _sizeX, const int _sizeY)
-{
-	FGridSystemSquare::Setup(_sizeX, _sizeY);
+	if (_doSetup)
+	{
+		FGridSystemSquare::Setup(_sizeX, _sizeY);
+	}
 }
 
 void FGridSystemSquare::Setup(int _sizeX, int _sizeY)
@@ -73,6 +71,16 @@ int FGridSystemSquare::GetDistance(const FGridNode& _nodeStart, const FGridNode&
 int FGridSystemSquare::GetDistance(const FIntVector2& _coordStart, const FIntVector2& _coordEnd) const
 {
 	return FMath::Max(FMath::Abs(_coordEnd.X - _coordStart.X), FMath::Abs(_coordEnd.Y - _coordStart.Y));
+}
+
+FIntVector2 FGridSystemSquare::GetCoordsAtLocation(const FVector& _location) const
+{
+	return FIntVector2(FMath::Floor(_location.X), FMath::Floor(_location.Y));
+}
+
+FVector FGridSystemSquare::GetLocationAtCoords(const FIntVector2& _location) const
+{
+	return FVector(_location.X, _location.Y, 0.0f);
 }
 
 bool FGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2& _coords) const

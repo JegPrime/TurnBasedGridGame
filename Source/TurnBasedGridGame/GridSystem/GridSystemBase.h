@@ -21,6 +21,8 @@ public:
 	virtual TArray<FIntVector2> GetNeighbourCoords(const FIntVector2& _gridNode) const = 0;
 	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const = 0;
 	virtual int GetDistance(const FIntVector2& _nodeA, const FIntVector2& _nodeB) const = 0;
+	virtual FIntVector2 GetCoordsAtLocation(const FVector& _location) const = 0;
+	virtual FVector GetLocationAtCoords(const FIntVector2& _location) const = 0;
 	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const = 0;
 	virtual const FVector GetRelativeLocationForNode(const FGridNode& _gridNode) const = 0;
 };
