@@ -52,7 +52,16 @@ void AGridManager::BeginPlay()
 				AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
 				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 				{
-					spawnedActor->SetActorScale3D(FVector(m_gridTileScale));
+					FVector gridScaler = FVector::One();
+					if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
+					{
+						FVector min,max = FVector::ZeroVector;
+						mesh->GetLocalBounds(min, max);
+						gridScaler = FVector(	1 / FMath::Abs(max.X - min.X),
+												1 / FMath::Abs(max.Y - min.Y),
+												1);
+					}
+					spawnedActor->SetActorScale3D(FVector(m_gridTileScale * gridScaler.X, m_gridTileScale * gridScaler.Y, 1));
 					spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 				}
 			}
@@ -76,7 +85,7 @@ void AGridManager::Tick(float DeltaTime)
 const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
 {
 	FVector tileLocation = m_gridSystem->GetRelativeLocationForNode(_gridNode);
-	tileLocation *= m_gridTileSize * m_gridTileScale;
+	tileLocation *= m_gridTileScale;
 	return tileLocation + this->GetActorLocation();
 }
 
