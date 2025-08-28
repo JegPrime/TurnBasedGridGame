@@ -55,9 +55,24 @@ TArray<FGridNode> FGridSystemSquare::GetNeighbours(const FGridNode& _gridNode) c
 	return result;
 }
 
+TArray<FIntVector2> FGridSystemSquare::GetNeighbourCoords(const FIntVector2& _gridNode) const
+{
+	TArray<FIntVector2> result;
+	for (auto direction : GetNeighbourDirections())
+	{
+		result.Add(_gridNode + direction);
+	}
+	return result;
+}
+
 int FGridSystemSquare::GetDistance(const FGridNode& _nodeStart, const FGridNode& _nodeEnd) const
 {
-	return FMath::Max(FMath::Abs(_nodeEnd.m_gridX - _nodeStart.m_gridX), FMath::Abs(_nodeEnd.m_gridY - _nodeStart.m_gridY));
+	return GetDistance(_nodeStart.GetGridPosition(), _nodeEnd.GetGridPosition());
+}
+
+int FGridSystemSquare::GetDistance(const FIntVector2& _coordStart, const FIntVector2& _coordEnd) const
+{
+	return FMath::Max(FMath::Abs(_coordEnd.X - _coordStart.X), FMath::Abs(_coordEnd.Y - _coordStart.Y));
 }
 
 bool FGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2& _coords) const

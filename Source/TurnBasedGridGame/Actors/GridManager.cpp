@@ -3,9 +3,6 @@
 
 #include "GridManager.h"
 
-#include "Kismet/GameplayStatics.h"
-
-
 // Sets default values
 AGridManager::AGridManager()
 {
@@ -17,8 +14,36 @@ void AGridManager::BeginPlay()
 	Super::BeginPlay();
 
 	ensureMsgf(m_tileMeshActorClass != nullptr, TEXT("AGridManager::AGridManager - m_tileMesh is nullptr"));
-	ensureMsgf(ensure(m_gridSize > 1), TEXT("AGridManager::AGridManager - m_gridSize too small"));
+	ensureMsgf(m_gridSize > 1, TEXT("AGridManager::AGridManager - m_gridSize too small"));
 
+	GenerateGrid();
+}
+
+void AGridManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	RemoveGrid();
+	
+	Super::EndPlay(EndPlayReason);
+}
+
+void AGridManager::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+}
+
+const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
+{
+	const FVector tileLocation = m_gridSystem->GetRelativeLocationForNode(_gridNode) * m_gridTileScale;
+	return tileLocation + m_tileDisplacement + GetActorLocation();
+}
+
+const FIntVector2 AGridManager::GetTileCoordsAtLocation(const FVector& _location) const
+{
+	return FIntVector2(_location.X / m_gridTileScale, _location.Y / m_gridTileScale);
+}
+
+void AGridManager::GenerateGrid()
+{
 	m_gridSystem = new FGridSystemSquare(m_gridSize);
 	if (m_useSingleMesh)
 	{
@@ -41,6 +66,7 @@ void AGridManager::BeginPlay()
 				mesh->SetCustomPrimitiveDataFloat(1, m_gridSize);
 			}
 		}
+		m_gridSystemActors.Add(spawnedActor);
 	}
 	else
 	{
@@ -52,40 +78,33 @@ void AGridManager::BeginPlay()
 				AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
 				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 				{
-					FVector gridScaler = FVector::One();
+					FVector gridScale = FVector::One();
 					if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
 					{
 						FVector min,max = FVector::ZeroVector;
 						mesh->GetLocalBounds(min, max);
-						gridScaler = FVector(	1 / FMath::Abs(max.X - min.X),
+						gridScale = FVector(	1 / FMath::Abs(max.X - min.X),
 												1 / FMath::Abs(max.Y - min.Y),
 												1);
 					}
-					spawnedActor->SetActorScale3D(FVector(m_gridTileScale * gridScaler.X, m_gridTileScale * gridScaler.Y, 1));
+					spawnedActor->SetActorScale3D(FVector(m_gridTileScale * gridScale.X, m_gridTileScale * gridScale.Y, 1));
 					spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 				}
+				m_gridSystemActors.Add(spawnedActor);
 			}
 		}
 	}
 }
 
-void AGridManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+void AGridManager::RemoveGrid()
 {
 	delete m_gridSystem;
 	m_gridSystem = nullptr;
-	
-	Super::EndPlay(EndPlayReason);
-}
 
-void AGridManager::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
-{
-	FVector tileLocation = m_gridSystem->GetRelativeLocationForNode(_gridNode);
-	tileLocation *= m_gridTileScale;
-	return tileLocation + this->GetActorLocation();
+	for (auto actor : m_gridSystemActors)
+	{
+		actor->Destroy();
+	}
+	m_gridSystemActors.Empty();
 }
 

@@ -18,7 +18,9 @@ public:
 	virtual void Setup(int _size) override;
 	virtual TArray<FIntVector2> GetNeighbourDirections() const override;
 	virtual TArray<FGridNode> GetNeighbours(const FGridNode& _gridNode) const override;
+	virtual TArray<FIntVector2> GetNeighbourCoords(const FIntVector2& _gridNode) const override;
 	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const override;
+	virtual int GetDistance(const FIntVector2& _nodeA, const FIntVector2& _nodeB) const override;
 	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const override;
 	virtual const FVector GetRelativeLocationForNode(const FGridNode& _gridNode) const override;
 };

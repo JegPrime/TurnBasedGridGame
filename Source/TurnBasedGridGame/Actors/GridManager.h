@@ -21,16 +21,22 @@ private:
 	virtual void Tick(float DeltaTime) override;
 
 	const FVector GetTileLocation(const FGridNode& _gridNode) const;
+	const FIntVector2 GetTileCoordsAtLocation(const FVector& _location) const;
 
-private:
-	UPROPERTY(EditAnywhere)
-	UClass* m_tileMeshActorClass;
-	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
+	void GenerateGrid();
+	void RemoveGrid();
+
+private:	
+	UPROPERTY(EditAnywhere, DisplayName="Tile Reference", Category="GridManager")
+	TSubclassOf<AActor> m_tileMeshActorClass;
+	UPROPERTY(EditAnywhere, DisplayName="Grid Size", Category="GridManager|Generation Parameters", meta=(ClampMin=1))
 	int m_gridSize = 3;
-	UPROPERTY(EditAnywhere, meta=(ClampMin=0.1f))
+	UPROPERTY(EditAnywhere, DisplayName="Tile Size", Category="GridManager|Generation Parameters", meta=(ClampMin=0.1f))
 	float m_gridTileScale = 1.f;
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, DisplayName="Use Single Mesh", Category="GridManager|Generation Parameters")
 	bool m_useSingleMesh = true;
-	
-	FGridSystemSquare* m_gridSystem;
+
+	const FVector m_tileDisplacement = FVector(m_gridTileScale / 2, m_gridTileScale / 2, 0);
+	FGridSystemSquare* m_gridSystem = nullptr;
+	TArray<TObjectPtr<AActor>> m_gridSystemActors;
 };
