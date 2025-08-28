@@ -28,8 +28,6 @@ private:
 	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
 	int m_gridSize = 3;
 	UPROPERTY(EditAnywhere, meta=(ClampMin=0.1f))
-	float m_gridTileSize = 100.f;
-	UPROPERTY(EditAnywhere, meta=(ClampMin=0.1f))
 	float m_gridTileScale = 1.f;
 	UPROPERTY(EditAnywhere)
 	bool m_useSingleMesh = true;

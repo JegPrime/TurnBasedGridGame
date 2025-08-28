@@ -22,16 +22,21 @@ void AGridManager::BeginPlay()
 	m_gridSystem = new FGridSystemSquare(m_gridSize);
 	if (m_useSingleMesh)
 	{
-		const FVector actorLocation = this->GetActorLocation() +
-			FVector(m_gridSize * m_gridTileSize * m_gridTileScale / 2,
-					m_gridSize * m_gridTileSize * m_gridTileScale / 2,
-					0);
+		const FVector gridSize = FVector(	m_gridSize * m_gridTileScale,
+											m_gridSize * m_gridTileScale,
+											0);
+		const FVector actorLocation = GetActorLocation() + gridSize / 2;
 		AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &actorLocation);
 		if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 		{
 			if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
 			{
-				mesh->SetWorldScale3D(mesh->GetComponentScale() * m_gridSize);
+				FVector min,max = FVector::ZeroVector;
+				mesh->GetLocalBounds(min, max);
+				FVector scaledSizeVector = FVector(	gridSize.X / FMath::Abs(max.X - min.X),
+													gridSize.Y / FMath::Abs(max.Y - min.Y),
+													1);
+				mesh->SetWorldScale3D(scaledSizeVector);
 				mesh->SetCustomPrimitiveDataFloat(0, m_gridSize);
 				mesh->SetCustomPrimitiveDataFloat(1, m_gridSize);
 			}
