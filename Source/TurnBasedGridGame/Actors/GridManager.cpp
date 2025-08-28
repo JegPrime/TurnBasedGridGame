@@ -19,18 +19,48 @@ void AGridManager::BeginPlay()
 	ensureMsgf(m_tileMeshActorClass != nullptr, TEXT("AGridManager::AGridManager - m_tileMesh is nullptr"));
 	ensureMsgf(ensure(m_gridSize > 1), TEXT("AGridManager::AGridManager - m_gridSize too small"));
 
-	m_gridSystem = NewObject<UGridSystemSquare>();
-	m_gridSystem->Setup(m_gridSize);
-	
-	for (auto gridLine : m_gridSystem->m_grid)
+	m_gridSystem = new FGridSystemSquare(m_gridSize);
+	if (m_useSingleMesh)
 	{
-		for (auto gridNode : gridLine)
+		const FVector actorLocation = this->GetActorLocation() +
+			FVector(m_gridSize * m_gridTileSize * m_gridTileScale / 2,
+					m_gridSize * m_gridTileSize * m_gridTileScale / 2,
+					0);
+		AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &actorLocation);
+		if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
 		{
-			const FVector tileLocation = GetTileLocation(gridNode);
-			AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
-			spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+			if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
+			{
+				mesh->SetWorldScale3D(mesh->GetComponentScale() * m_gridSize);
+				mesh->SetCustomPrimitiveDataFloat(0, m_gridSize);
+				mesh->SetCustomPrimitiveDataFloat(1, m_gridSize);
+			}
 		}
 	}
+	else
+	{
+		for (auto gridLine : m_gridSystem->m_grid)
+		{
+			for (auto gridNode : gridLine)
+			{
+				const FVector tileLocation = GetTileLocation(gridNode);
+				AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
+				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
+				{
+					spawnedActor->SetActorScale3D(FVector(m_gridTileScale));
+					spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
+				}
+			}
+		}
+	}
+}
+
+void AGridManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	delete m_gridSystem;
+	m_gridSystem = nullptr;
+	
+	Super::EndPlay(EndPlayReason);
 }
 
 void AGridManager::Tick(float DeltaTime)
@@ -42,6 +72,6 @@ const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
 {
 	FVector tileLocation = m_gridSystem->GetRelativeLocationForNode(_gridNode);
 	tileLocation *= m_gridTileSize * m_gridTileScale;
-	return tileLocation;
+	return tileLocation + this->GetActorLocation();
 }
 

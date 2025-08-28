@@ -17,20 +17,22 @@ public:
 
 private:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void Tick(float DeltaTime) override;
 
-	virtual const FVector GetTileLocation(const FGridNode& _gridNode) const;
+	const FVector GetTileLocation(const FGridNode& _gridNode) const;
 
 private:
 	UPROPERTY(EditAnywhere)
 	UClass* m_tileMeshActorClass;
 	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
 	int m_gridSize = 3;
-	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
-	int m_gridTileSize = 100;
-	UPROPERTY(EditAnywhere, meta=(ClampMin=1))
-	int m_gridTileScale = 1;
-
-	UPROPERTY(VisibleAnywhere)
-	UGridSystemSquare* m_gridSystem;
+	UPROPERTY(EditAnywhere, meta=(ClampMin=0.1f))
+	float m_gridTileSize = 100.f;
+	UPROPERTY(EditAnywhere, meta=(ClampMin=0.1f))
+	float m_gridTileScale = 1.f;
+	UPROPERTY(EditAnywhere)
+	bool m_useSingleMesh = true;
+	
+	FGridSystemSquare* m_gridSystem;
 };

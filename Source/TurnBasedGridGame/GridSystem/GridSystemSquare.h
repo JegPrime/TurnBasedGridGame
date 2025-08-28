@@ -4,18 +4,16 @@
 
 #include "CoreMinimal.h"
 #include "GridSystemBase.h"
-#include "UObject/Object.h"
-#include "GridSystemSquare.generated.h"
 
 /**
  * 
  */
-UCLASS()
-class TURNBASEDGRIDGAME_API UGridSystemSquare : public UGridSystemBase
+class TURNBASEDGRIDGAME_API FGridSystemSquare : public FGridSystemBase
 {
-	GENERATED_BODY()
-	
 public:
+	explicit FGridSystemSquare(const int _size);
+	explicit FGridSystemSquare(const int _sizeX, const int _sizeY);
+	
 	virtual void Setup(int _sizeX, int _sizeY);
 	virtual void Setup(int _size) override;
 	virtual TArray<FIntVector2> GetNeighbourDirections() const override;

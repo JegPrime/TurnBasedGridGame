@@ -3,7 +3,17 @@
 #include "GridSystemSquare.h"
 #include "GridNode.h"
 
-void UGridSystemSquare::Setup(int _sizeX, int _sizeY)
+FGridSystemSquare::FGridSystemSquare(const int _size)
+{
+	FGridSystemSquare::Setup(_size);
+}
+
+FGridSystemSquare::FGridSystemSquare(const int _sizeX, const int _sizeY)
+{
+	FGridSystemSquare::Setup(_sizeX, _sizeY);
+}
+
+void FGridSystemSquare::Setup(int _sizeX, int _sizeY)
 {
 	for (int i = 0; i < _sizeX; ++i)
 	{
@@ -16,12 +26,12 @@ void UGridSystemSquare::Setup(int _sizeX, int _sizeY)
 	}
 }
 
-void UGridSystemSquare::Setup(int _sizeX)
+void FGridSystemSquare::Setup(int _sizeX)
 {
 	Setup(_sizeX, _sizeX);
 }
 
-TArray<FIntVector2> UGridSystemSquare::GetNeighbourDirections() const
+TArray<FIntVector2> FGridSystemSquare::GetNeighbourDirections() const
 {
 	return
 	{
@@ -31,7 +41,7 @@ TArray<FIntVector2> UGridSystemSquare::GetNeighbourDirections() const
 	};
 }
 
-TArray<FGridNode> UGridSystemSquare::GetNeighbours(const FGridNode& _gridNode) const
+TArray<FGridNode> FGridSystemSquare::GetNeighbours(const FGridNode& _gridNode) const
 {
 	TArray<FGridNode> result;
 	for (auto direction : GetNeighbourDirections())
@@ -45,12 +55,12 @@ TArray<FGridNode> UGridSystemSquare::GetNeighbours(const FGridNode& _gridNode) c
 	return result;
 }
 
-int UGridSystemSquare::GetDistance(const FGridNode& _nodeStart, const FGridNode& _nodeEnd) const
+int FGridSystemSquare::GetDistance(const FGridNode& _nodeStart, const FGridNode& _nodeEnd) const
 {
 	return FMath::Max(FMath::Abs(_nodeEnd.m_gridX - _nodeStart.m_gridX), FMath::Abs(_nodeEnd.m_gridY - _nodeStart.m_gridY));
 }
 
-bool UGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2& _coords) const
+bool FGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2& _coords) const
 {
 	if (!FMath::IsWithin(_coords.X, 0, m_gridSize) ||
 		!FMath::IsWithin(_coords.Y, 0, m_gridSize))
@@ -62,7 +72,7 @@ bool UGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2&
 	return true;
 }
 
-const FVector UGridSystemSquare::GetRelativeLocationForNode(const FGridNode& _gridNode) const
+const FVector FGridSystemSquare::GetRelativeLocationForNode(const FGridNode& _gridNode) const
 {
 	return FVector(_gridNode.m_gridX, _gridNode.m_gridY, 0.f);
 }
