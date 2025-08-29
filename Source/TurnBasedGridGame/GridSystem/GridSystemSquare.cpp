@@ -9,6 +9,9 @@ FGridSystemSquare::FGridSystemSquare(const int _sizeX, const int _sizeY, const b
 	{
 		FGridSystemSquare::Setup(_sizeX, _sizeY);
 	}
+
+	m_gridSize = _sizeX;
+	m_gridSizeAlt = _sizeY;
 }
 
 void FGridSystemSquare::Setup(int _sizeX, int _sizeY)
@@ -39,38 +42,36 @@ TArray<FIntVector2> FGridSystemSquare::GetNeighbourDirections() const
 	};
 }
 
-TArray<FGridNode> FGridSystemSquare::GetNeighbours(const FGridNode& _gridNode) const
+TArray<FGridNode> FGridSystemSquare::GetNeighbourNodes(const FGridNode& _gridNode) const
 {
 	TArray<FGridNode> result;
 	for (auto direction : GetNeighbourDirections())
 	{
-		FGridNode gridNode;
-		if (TryGetGridNodeAt(gridNode, _gridNode.GetGridPosition() + direction))
+		const FIntVector2 neighbourGridCoord = _gridNode.GetGridPosition() + direction; 
+		if (IsCoordValid(neighbourGridCoord))
 		{
-			result.Add(gridNode);	
+			result.Add(m_grid[neighbourGridCoord.X][neighbourGridCoord.Y]);
 		}
 	}
 	return result;
 }
 
-TArray<FIntVector2> FGridSystemSquare::GetNeighbourCoords(const FIntVector2& _gridNode) const
+TArray<FIntVector2> FGridSystemSquare::GetNeighbourCoords(const FIntVector2& _coord) const
 {
 	TArray<FIntVector2> result;
 	for (auto direction : GetNeighbourDirections())
 	{
-		result.Add(_gridNode + direction);
+		if (IsCoordValid(_coord))
+		{
+			result.Add(_coord + direction);
+		}
 	}
 	return result;
 }
 
-int FGridSystemSquare::GetDistance(const FGridNode& _nodeStart, const FGridNode& _nodeEnd) const
+int FGridSystemSquare::GetDistance(const FIntVector2& _coordA, const FIntVector2& _coordB) const
 {
-	return GetDistance(_nodeStart.GetGridPosition(), _nodeEnd.GetGridPosition());
-}
-
-int FGridSystemSquare::GetDistance(const FIntVector2& _coordStart, const FIntVector2& _coordEnd) const
-{
-	return FMath::Max(FMath::Abs(_coordEnd.X - _coordStart.X), FMath::Abs(_coordEnd.Y - _coordStart.Y));
+	return FMath::Max(FMath::Abs(_coordB.X - _coordA.X), FMath::Abs(_coordB.Y - _coordA.Y));
 }
 
 FIntVector2 FGridSystemSquare::GetCoordsAtLocation(const FVector& _location) const
@@ -78,24 +79,23 @@ FIntVector2 FGridSystemSquare::GetCoordsAtLocation(const FVector& _location) con
 	return FIntVector2(FMath::Floor(_location.X), FMath::Floor(_location.Y));
 }
 
-FVector FGridSystemSquare::GetLocationAtCoords(const FIntVector2& _location) const
+FVector FGridSystemSquare::GetLocationAtCoords(const FIntVector2& _coord) const
 {
-	return FVector(_location.X, _location.Y, 0.0f);
+	return FVector(_coord.X, _coord.Y, 0.0f);
 }
 
-bool FGridSystemSquare::TryGetGridNodeAt(FGridNode&_gridNode, const FIntVector2& _coords) const
+bool FGridSystemSquare::IsCoordValid(const FIntVector2& _coords) const
 {
-	if (!FMath::IsWithin(_coords.X, 0, m_gridSize) ||
-		!FMath::IsWithin(_coords.Y, 0, m_gridSize))
+	if (m_gridSize == 0 || m_gridSizeAlt == 0)
 	{
 		return false;
 	}
 	
-	_gridNode = m_grid[_coords.X][_coords.Y];
-	return true;
-}
+	if (!FMath::IsWithin(_coords.X, 1, m_gridSize) ||
+		!FMath::IsWithin(_coords.Y, 1, m_gridSizeAlt))
+	{
+		return false;
+	}
 
-const FVector FGridSystemSquare::GetRelativeLocationForNode(const FGridNode& _gridNode) const
-{
-	return FVector(_gridNode.m_gridX, _gridNode.m_gridY, 0.f);
+	return true;
 }

@@ -25,15 +25,17 @@ private:
 	UFUNCTION(CallInEditor, Category="GridManager")
 	void ClearGridPreview();
 	
+	void GenerateGrid();
+	void RemoveGrid();
+
+	//These TileLocation methods are needed to adjust the GridSystem's "unit" distances to currently used parameters
 	const FVector GetTileLocation(const FGridNode& _gridNode) const;
 	const FVector GetTileLocation(const FIntVector2& _coords) const;
 	const FIntVector2 GetTileCoordsAtLocation(const FVector& _location) const;
+	
 #if WITH_EDITOR
 	void DrawMousePositionDebug() const;
 #endif
-	
-	void GenerateGrid();
-	void RemoveGrid();
 
 private:	
 	UPROPERTY(EditAnywhere, DisplayName="Tile Reference", Category="GridManager")
@@ -49,7 +51,8 @@ private:
 
 	//Used to adjust center of a tile if needed
 	const FVector m_tileDisplacement = FVector(m_gridTileScale / 2, m_gridTileScale / 2, 0);
-	
-	FGridSystemSquare* m_gridSystem = nullptr;
 	TArray<TObjectPtr<AActor>> m_gridSystemActors;
+	
+public:
+	FGridSystemSquare m_gridSystem{0, false};
 };

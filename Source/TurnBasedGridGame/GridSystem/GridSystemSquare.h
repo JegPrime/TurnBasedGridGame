@@ -17,12 +17,12 @@ public:
 	virtual void Setup(int _sizeX, int _sizeY);
 	virtual void Setup(int _size) override;
 	virtual TArray<FIntVector2> GetNeighbourDirections() const override;
-	virtual TArray<FGridNode> GetNeighbours(const FGridNode& _gridNode) const override;
-	virtual TArray<FIntVector2> GetNeighbourCoords(const FIntVector2& _gridNode) const override;
-	virtual int GetDistance(const FGridNode& _nodeA, const FGridNode& _nodeB) const override;
-	virtual int GetDistance(const FIntVector2& _nodeA, const FIntVector2& _nodeB) const override;
+	virtual TArray<FGridNode> GetNeighbourNodes(const FGridNode& _gridNode) const override;
+	virtual TArray<FIntVector2> GetNeighbourCoords(const FIntVector2& _coord) const override;
+	virtual int GetDistance(const FIntVector2& _coordA, const FIntVector2& _coordB) const override;
 	virtual FIntVector2 GetCoordsAtLocation(const FVector& _location) const override;
-	virtual FVector GetLocationAtCoords(const FIntVector2& _location) const override;
-	virtual bool TryGetGridNodeAt(FGridNode& _gridNode, const FIntVector2& _coords) const override;
-	virtual const FVector GetRelativeLocationForNode(const FGridNode& _gridNode) const override;
+	virtual FVector GetLocationAtCoords(const FIntVector2& _coord) const override;
+	virtual bool IsCoordValid(const FIntVector2& _coords) const override;
+
+	int m_gridSizeAlt = 0;
 };
