@@ -12,15 +12,15 @@
 AGridManager::AGridManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	m_gridSystem = FGridSystemSquare(0, false);
 }
 
 void AGridManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	ensureMsgf(m_tileMeshActorClass != nullptr, TEXT("AGridManager::AGridManager - m_tileMesh is nullptr"));
-	ensureMsgf(m_gridSize > 1, TEXT("AGridManager::AGridManager - m_gridSize too small"));
+	ensureMsgf(m_gridSystemType != nullptr, TEXT("AGridManager::BeginPlay - m_gridSystem is nullptr"));
+	ensureMsgf(m_tileMeshActorClass != nullptr, TEXT("AGridManager::BeginPlay - m_tileMesh is nullptr"));
+	ensureMsgf(m_gridSize > 1, TEXT("AGridManager::BeginPlay - m_gridSize too small"));
 
 	RemoveGrid();
 	GenerateGrid();
@@ -55,6 +55,20 @@ void AGridManager::ClearGridPreview()
 
 void AGridManager::GenerateGrid()
 {
+	if (!ensureMsgf(m_gridSystemType != nullptr, TEXT("AGridManager::GenerateGrid - GridSystemType was not set")))
+	{
+		return;
+	}
+	
+	UGridSystem* gridSystemPtr = NewObject<UGridSystem>(this, m_gridSystemType, FName("GridSystem"));
+	m_gridSystem = gridSystemPtr;
+	if (!ensureMsgf(m_gridSystem != nullptr, TEXT("AGridManager::GenerateGrid - GridSystem was not generated")))
+	{
+		return;
+	}
+
+	//TODO: Add possibility to setup rectangular grid 
+	m_gridSystem->Setup(m_gridSize);
 	FVector tileScaleCorrection = FVector(m_gridTileScale,
 										  m_gridTileScale,
 										  1);
@@ -70,7 +84,6 @@ void AGridManager::GenerateGrid()
 		}
 	}
 	
-	m_gridSystem = FGridSystemSquare(m_gridSize, m_gridSize, true);
 	if (m_useSingleMesh)
 	{
 		const FVector gridExtent = FVector(m_gridSize * m_gridTileScale,
@@ -78,7 +91,7 @@ void AGridManager::GenerateGrid()
 										   0);
 		const FVector modifiedActorLocation = GetActorLocation() + gridExtent / 2;
 		AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &modifiedActorLocation);
-		if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
+		if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::GenerateGrid - Spawned actor is nullptr")))
 		{
 			if (UStaticMeshComponent* mesh = spawnedActor->GetComponentByClass<UStaticMeshComponent>())
 			{
@@ -92,13 +105,13 @@ void AGridManager::GenerateGrid()
 	}
 	else
 	{
-		for (auto gridLine : m_gridSystem.m_grid)
+		for (auto gridLine : m_gridSystem->m_grid)
 		{
 			for (auto gridNode : gridLine)
 			{
 				const FVector tileLocation = GetTileLocation(gridNode);
 				AActor* spawnedActor = GetWorld()->SpawnActor(m_tileMeshActorClass, &tileLocation);
-				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::BeginPlay - Spawned actor is nullptr")))
+				if (ensureMsgf(spawnedActor != nullptr, TEXT("AGridManager::GenerateGrid - Spawned actor is nullptr")))
 				{
 					spawnedActor->SetActorScale3D(tileScaleCorrection);
 					spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
@@ -111,10 +124,13 @@ void AGridManager::GenerateGrid()
 
 void AGridManager::RemoveGrid()
 {
+	m_gridSystem = nullptr;
+	
 	for (auto actor : m_gridSystemActors)
 	{
 		actor->Destroy();
 	}
+	CollectGarbage(RF_NoFlags, true);
 	m_gridSystemActors.Empty();
 }
 
@@ -125,13 +141,24 @@ const FVector AGridManager::GetTileLocation(const FGridNode& _gridNode) const
 
 const FVector AGridManager::GetTileLocation(const FIntVector2& _coords) const
 {
-	const FVector tileLocation = m_gridSystem.GetLocationAtCoords(_coords) * m_gridTileScale;
+	if (!ensureMsgf(m_gridSystem != nullptr, TEXT("AGridManager::GetTileLocation - m_gridSystem is nullptr")))
+	{
+		return FVector::ZeroVector;
+	}
+	
+	const FVector tileLocation = m_gridSystem->GetLocationAtCoords(_coords) * m_gridTileScale;
 	return tileLocation + GetActorLocation() + (m_useTileMeshOffset ? m_tileDisplacement : FVector::ZeroVector);
 }
 
 const FIntVector2 AGridManager::GetTileCoordsAtLocation(const FVector& _location) const
 {
-	return m_gridSystem.GetCoordsAtLocation((GetActorLocation() +  _location + (m_useTileMeshOffset || m_useSingleMesh ? FVector::ZeroVector : m_tileDisplacement)) / m_gridTileScale);
+	if (!ensureMsgf(m_gridSystem != nullptr, TEXT("AGridManager::GetTileCoordsAtLocation - m_gridSystem is nullptr")))
+	{
+		return FIntVector2::ZeroValue;
+	}
+
+	const FVector offset = m_useTileMeshOffset || m_useSingleMesh ? FVector::ZeroVector : m_tileDisplacement;
+	return m_gridSystem->GetCoordsAtLocation((GetActorLocation() + _location + offset) / m_gridTileScale);
 }
 
 #if WITH_EDITOR

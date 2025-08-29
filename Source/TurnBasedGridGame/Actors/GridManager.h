@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "TurnBasedGridGame/GridSystem/GridSystemSquare.h"
+#include "TurnBasedGridGame/GridSystem/GridSystem.h"
 #include "GridManager.generated.h"
 
 UCLASS()
@@ -49,10 +49,13 @@ private:
 	UPROPERTY(EditAnywhere, DisplayName="Use Tile Mesh offset", Category="GridManager|Generation Parameters", meta=(EditCondition = "!m_useSingleMesh", EditConditionHides))
 	bool m_useTileMeshOffset = true;
 
+	UPROPERTY(EditAnywhere, DisplayName="GridType", Category="GridManager")
+	TSubclassOf<UGridSystem> m_gridSystemType = nullptr;
+	
 	//Used to adjust center of a tile if needed
 	const FVector m_tileDisplacement = FVector(m_gridTileScale / 2, m_gridTileScale / 2, 0);
 	TArray<TObjectPtr<AActor>> m_gridSystemActors;
 	
 public:
-	FGridSystemSquare m_gridSystem{0, false};
+	TScriptInterface<IGridSystem> m_gridSystem = nullptr;
 };
