@@ -48,14 +48,15 @@ private:
 	bool m_useSingleMesh = true;
 	UPROPERTY(EditAnywhere, DisplayName="Use Tile Mesh offset", Category="GridManager|Generation Parameters", meta=(EditCondition = "!m_useSingleMesh", EditConditionHides))
 	bool m_useTileMeshOffset = true;
-
 	UPROPERTY(EditAnywhere, DisplayName="GridType", Category="GridManager")
 	TSubclassOf<UGridSystem> m_gridSystemType = nullptr;
 	
+public:
+	UPROPERTY()
+	TScriptInterface<IGridSystem> m_gridSystem = nullptr;
+
+private:
 	//Used to adjust center of a tile if needed
 	const FVector m_tileDisplacement = FVector(m_gridTileScale / 2, m_gridTileScale / 2, 0);
 	TArray<TObjectPtr<AActor>> m_gridSystemActors;
-	
-public:
-	TScriptInterface<IGridSystem> m_gridSystem = nullptr;
 };

@@ -59,9 +59,10 @@ void AGridManager::GenerateGrid()
 	{
 		return;
 	}
-	
-	UGridSystem* gridSystemPtr = NewObject<UGridSystem>(this, m_gridSystemType, FName("GridSystem"));
+
+	TObjectPtr<UGridSystem> gridSystemPtr = NewObject<UGridSystem>(this, m_gridSystemType, FName("GridSystem"));
 	m_gridSystem = gridSystemPtr;
+	gridSystemPtr = nullptr;
 	if (!ensureMsgf(m_gridSystem != nullptr, TEXT("AGridManager::GenerateGrid - GridSystem was not generated")))
 	{
 		return;
