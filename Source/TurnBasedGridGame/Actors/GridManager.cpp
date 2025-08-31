@@ -101,6 +101,7 @@ void AGridManager::GenerateGrid()
 				mesh->SetCustomPrimitiveDataFloat(0, m_gridSize);
 				mesh->SetCustomPrimitiveDataFloat(1, m_gridSize);
 			}
+			spawnedActor->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
 		}
 		m_gridSystemActors.Add(spawnedActor);
 	}
@@ -121,12 +122,15 @@ void AGridManager::GenerateGrid()
 			}
 		}
 	}
+	
+	m_isGridGenerated = true;
+	OnGridGenerated.Broadcast();
 }
 
 void AGridManager::RemoveGrid()
 {
+	m_isGridGenerated = false;
 	m_gridSystem = nullptr;
-	
 	for (auto actor : m_gridSystemActors)
 	{
 		actor->Destroy();

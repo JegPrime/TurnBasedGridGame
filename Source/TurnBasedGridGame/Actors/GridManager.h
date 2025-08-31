@@ -11,10 +11,12 @@ UCLASS()
 class TURNBASEDGRIDGAME_API AGridManager : public AActor
 {
 	GENERATED_BODY()
-
+	DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridGenerated);
+	
 public:
 	AGridManager();
-
+	FOnGridGenerated OnGridGenerated;
+	
 private:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
@@ -54,6 +56,7 @@ private:
 public:
 	UPROPERTY()
 	TScriptInterface<IGridSystem> m_gridSystem = nullptr;
+	bool m_isGridGenerated = false;
 
 private:
 	//Used to adjust center of a tile if needed
