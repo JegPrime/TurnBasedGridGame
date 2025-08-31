@@ -3,10 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GridObject.h"
 #include "GameFramework/Actor.h"
 #include "SimulationManager.generated.h"
 
 class AGridManager;
+
+UENUM()
+enum class EGridObjectTeam : uint8
+{
+	Red,
+	Blue,
+	Count UMETA(Hidden)
+};
 
 UCLASS()
 class TURNBASEDGRIDGAME_API ASimulationManager : public AActor
@@ -31,13 +40,24 @@ protected:
 	TSubclassOf<AGridManager> m_gridManagerBP;
 	UPROPERTY(EditAnywhere, DisplayName="Grid Actor", Category="SimulationManager")
 	TObjectPtr<AGridManager> m_gridManager;
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditAnywhere, DisplayName="Grid ObjectBP", Category="SimulationManager")
+	TArray<TSubclassOf<AGridObject>> m_gridObjectBP;
+	UPROPERTY(EditAnywhere, DisplayName="Grid Simulation Frequency", Category="SimulationManager") 
 	float m_simulationTickTime = 0.1f;
-	
+	UPROPERTY(EditAnywhere, DisplayName="Starting Point Locations", Category="SimulationManager|TeamSetup")
+	TMap<EGridObjectTeam, FIntVector2> m_startingAreaCenters{{EGridObjectTeam::Red, {10,10}}, {EGridObjectTeam::Blue, {90,90}}};
+	UPROPERTY(EditAnywhere, DisplayName="Spawn Range of Start Point", Category="SimulationManager|TeamSetup")
+	int m_startingAreaRange = 5;
+	UPROPERTY(EditAnywhere, DisplayName="Spawn Object Number", Category="SimulationManager|TeamSetup")
+	int m_startingGridObjectsPerTeam = 5;
+
 private:
 	void CreateGridManager();
 	void Initialize();
 	void AddSimulationObject();
 	void MoveSimulationObject();
 	void RemoveSimulationObject();
+
+private:
+	TMap<EGridObjectTeam, TArray<TObjectPtr<AGridObject>>> m_gridObjectsMap;
 };

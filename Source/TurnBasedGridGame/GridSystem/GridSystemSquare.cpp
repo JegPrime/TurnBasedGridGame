@@ -91,3 +91,22 @@ bool UGridSystemSquare::IsCoordValid(const FIntVector2& _coords) const
 
 	return true;
 }
+
+TArray<FIntVector2> UGridSystemSquare::GetValidCoordsWithinRange(const FIntVector2& _coords, const int _range) const
+{
+	const int minX = FMath::Max(_coords.X - _range, 0);
+	const int maxX = FMath::Min(_coords.X + _range, m_gridSize);
+	const int minY = FMath::Max(_coords.Y - _range, 0);
+	const int maxY = FMath::Min(_coords.Y + _range, m_gridSize);
+
+	TArray<FIntVector2> validCoords;
+	for (int x = minX; x < maxX; ++x)
+	{
+		for (int y = minY; y < maxY; ++y)
+		{
+			validCoords.Add(FIntVector2(x, y));
+		}
+	}
+	
+	return validCoords;
+}

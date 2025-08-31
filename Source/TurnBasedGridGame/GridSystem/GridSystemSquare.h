@@ -20,6 +20,7 @@ public:
 	virtual FIntVector2 GetCoordsAtLocation(const FVector& _location) const override;
 	virtual FVector GetLocationAtCoords(const FIntVector2& _coord) const override;
 	virtual bool IsCoordValid(const FIntVector2& _coords) const override;
+	virtual TArray<FIntVector2> GetValidCoordsWithinRange(const FIntVector2& _coords, const int _range) const override;
 
 private:
 	int m_gridSizeAlt = 0;

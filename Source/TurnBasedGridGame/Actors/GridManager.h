@@ -16,6 +16,11 @@ class TURNBASEDGRIDGAME_API AGridManager : public AActor
 public:
 	AGridManager();
 	FOnGridGenerated OnGridGenerated;
+
+	//These TileLocation methods are needed to adjust the GridSystem's "unit" distances to currently used parameters
+	const FVector GetTileLocation(const FGridNode& _gridNode) const;
+	const FVector GetTileLocation(const FIntVector2& _coords) const;
+	const FIntVector2 GetTileCoordsAtLocation(const FVector& _location) const;
 	
 private:
 	virtual void BeginPlay() override;
@@ -29,11 +34,6 @@ private:
 	
 	void GenerateGrid();
 	void RemoveGrid();
-
-	//These TileLocation methods are needed to adjust the GridSystem's "unit" distances to currently used parameters
-	const FVector GetTileLocation(const FGridNode& _gridNode) const;
-	const FVector GetTileLocation(const FIntVector2& _coords) const;
-	const FIntVector2 GetTileCoordsAtLocation(const FVector& _location) const;
 	
 #if WITH_EDITOR
 	void DrawMousePositionDebug() const;

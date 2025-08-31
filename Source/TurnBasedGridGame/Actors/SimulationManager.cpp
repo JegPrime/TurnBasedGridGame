@@ -32,7 +32,6 @@ void ASimulationManager::BeginPlay()
 	}
 }
 
-// Called every frame
 void ASimulationManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -64,7 +63,7 @@ void ASimulationManager::CreateGridManager()
 	}
 	
 	m_gridManager = Cast<AGridManager>(GetWorld()->SpawnActor(m_gridManagerBP, &FVector::ZeroVector));
-	if (ensureMsgf(m_gridManager != nullptr, TEXT("ASimulationManager::Initialize - m_gridManager failed initialization")))
+	if (ensureMsgf(m_gridManager != nullptr, TEXT("ASimulationManager::CreateGridManager - m_gridManager failed initialization")))
 	{
 		m_gridManager->OnGridGenerated.AddDynamic(this, &ASimulationManager::OnGridGenerated);
 		m_gridManager->AttachToActor(this, FAttachmentTransformRules::KeepRelativeTransform);
@@ -74,8 +73,45 @@ void ASimulationManager::CreateGridManager()
 void ASimulationManager::Initialize()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	
-	//TODO: Add initial simulation objects here
+
+	if (!ensureMsgf(m_gridManager != nullptr, TEXT("ASimulationManager::Initialize - m_gridManager failed initialization")))
+	{
+		return;
+	}
+
+	if (!ensureMsgf(m_gridObjectBP.Num() > 0, TEXT("ASimulationManager::Initialize - m_gridObjectBP has no entries")))
+	{
+		return;
+	}
+
+	//Spawn Teams
+	for (int team = 0; team < static_cast<int>(EGridObjectTeam::Count); ++team)
+	{
+		const EGridObjectTeam gridTeam = static_cast<EGridObjectTeam>(team);
+		TArray<TObjectPtr<AGridObject>> gridTeamObjectArray = m_gridObjectsMap.FindOrAdd(gridTeam);
+		if (FIntVector2* startPos = m_startingAreaCenters.Find(gridTeam))
+		{
+			TArray<FIntVector2> potentialSpawnCoords = m_gridManager->m_gridSystem->GetValidCoordsWithinRange(*startPos, m_startingAreaRange);
+			for (int i = 0; i < m_startingGridObjectsPerTeam; ++i)
+			{
+				if (potentialSpawnCoords.IsEmpty())
+				{
+					break;
+				}
+				const int randomIndex = FMath::RandRange(0, potentialSpawnCoords.Num() - 1);
+				const FIntVector2 spawnCoords = potentialSpawnCoords[randomIndex];
+				const FVector spawnPointLocation = m_gridManager->GetTileLocation(spawnCoords);
+			
+				const TSubclassOf<AGridObject> randomGridActorBP = m_gridObjectBP[FMath::RandRange(0, m_gridObjectBP.Num() - 1)];
+				TObjectPtr<AGridObject> spawnedGridActor = Cast<AGridObject>(GetWorld()->SpawnActor(randomGridActorBP, &spawnPointLocation));
+				if (ensureMsgf(spawnedGridActor != nullptr, TEXT("ASimulationManager::Initialize - Spawned actor is nullptr")))
+				{
+					potentialSpawnCoords.RemoveAtSwap(randomIndex);
+					gridTeamObjectArray.Add(spawnedGridActor);
+				}
+			}
+		}
+	}
 }
 
 void ASimulationManager::AddSimulationObject()

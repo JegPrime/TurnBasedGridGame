@@ -27,6 +27,7 @@ public:
 	virtual FVector GetLocationAtCoords(const FIntVector2& _coord) const = 0;
 	virtual FVector GetLocationAtNode(const FGridNode& _gridNode) const { return GetLocationAtCoords(_gridNode.GetGridPosition()); }
 	virtual bool IsCoordValid(const FIntVector2& _coords) const = 0;
+	virtual TArray<FIntVector2> GetValidCoordsWithinRange(const FIntVector2& _coords, const int _range) const = 0;
 
 	TArray<TArray<FGridNode>> m_grid;
 	int m_gridSize = 0;
