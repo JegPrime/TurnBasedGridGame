@@ -108,6 +108,11 @@ void ASimulationManager::Initialize()
 				{
 					potentialSpawnCoords.RemoveAtSwap(randomIndex);
 					gridTeamObjectArray.Add(spawnedGridActor);
+
+					if (UStaticMeshComponent* mesh = spawnedGridActor->GetComponentByClass<UStaticMeshComponent>())
+					{
+						mesh->SetCustomPrimitiveDataFloat(0, team);
+					}
 				}
 			}
 		}
