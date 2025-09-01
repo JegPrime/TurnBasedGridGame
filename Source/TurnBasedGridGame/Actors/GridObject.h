@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "GridObject.generated.h"
 
+class UGridMoveComponent;
+
 UCLASS()
 class TURNBASEDGRIDGAME_API AGridObject : public AActor
 {
@@ -15,8 +17,9 @@ public:
 	AGridObject();
 
 	virtual bool IsBlocker() { return true; }
+	void Move(const FVector& _newLocation, const float _time);
 
 protected:
-	virtual void BeginPlay() override;
-	virtual void Tick(float DeltaTime) override;
+	UPROPERTY(EditAnywhere)
+	TObjectPtr<UGridMoveComponent> m_moveComponent;
 };

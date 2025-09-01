@@ -32,6 +32,8 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
+	UFUNCTION(CallInEditor)
+	void TestMoveActor();
 	UFUNCTION()
 	void OnGridGenerated();
 	
@@ -50,7 +52,7 @@ protected:
 	int m_startingAreaRange = 5;
 	UPROPERTY(EditAnywhere, DisplayName="Spawn Object Number", Category="SimulationManager|TeamSetup")
 	int m_startingGridObjectsPerTeam = 5;
-
+	
 private:
 	void CreateGridManager();
 	void Initialize();

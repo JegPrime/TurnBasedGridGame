@@ -47,6 +47,14 @@ void ASimulationManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void ASimulationManager::TestMoveActor()
+{
+	if (TObjectPtr<AGridObject> gridObject = m_gridObjectsMap.FindOrAdd(EGridObjectTeam::Red).Last())
+	{
+		gridObject->Move(FVector(100,100,0), 1.f);
+	}
+}
+
 void ASimulationManager::OnGridGenerated()
 {
 	if (ensureMsgf(m_gridManager != nullptr, TEXT("ASimulationManager::OnGridGenerated - m_gridManager is now nullptr. This shouldn't happen")))
@@ -88,7 +96,7 @@ void ASimulationManager::Initialize()
 	for (int team = 0; team < static_cast<int>(EGridObjectTeam::Count); ++team)
 	{
 		const EGridObjectTeam gridTeam = static_cast<EGridObjectTeam>(team);
-		TArray<TObjectPtr<AGridObject>> gridTeamObjectArray = m_gridObjectsMap.FindOrAdd(gridTeam);
+		TArray<TObjectPtr<AGridObject>>& gridTeamObjectArray = m_gridObjectsMap.FindOrAdd(gridTeam);
 		if (FIntVector2* startPos = m_startingAreaCenters.Find(gridTeam))
 		{
 			TArray<FIntVector2> potentialSpawnCoords = m_gridManager->m_gridSystem->GetValidCoordsWithinRange(*startPos, m_startingAreaRange);
