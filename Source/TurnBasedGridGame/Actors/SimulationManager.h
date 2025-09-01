@@ -34,6 +34,8 @@ protected:
 
 	UFUNCTION(CallInEditor)
 	void TestMoveActor();
+	UFUNCTION(CallInEditor)
+	void TestHitActor();
 	UFUNCTION()
 	void OnGridGenerated();
 	

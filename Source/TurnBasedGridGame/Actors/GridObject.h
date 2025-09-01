@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/GridReactComponent.h"
 #include "GameFramework/Actor.h"
 #include "GridObject.generated.h"
 
@@ -18,8 +19,14 @@ public:
 
 	virtual bool IsBlocker() { return true; }
 	void Move(const FVector& _newLocation, const float _time);
+	void GetHit();
 
 protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGridMoveComponent> m_moveComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UStaticMeshComponent> m_staticMeshComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<UGridReactComponent> m_reactComponent;
+	
 };

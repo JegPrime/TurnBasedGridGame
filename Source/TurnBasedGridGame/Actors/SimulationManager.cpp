@@ -55,6 +55,14 @@ void ASimulationManager::TestMoveActor()
 	}
 }
 
+void ASimulationManager::TestHitActor()
+{
+	if (TObjectPtr<AGridObject> gridObject = m_gridObjectsMap.FindOrAdd(EGridObjectTeam::Red).Last())
+	{
+		gridObject->GetHit();
+	}
+}
+
 void ASimulationManager::OnGridGenerated()
 {
 	if (ensureMsgf(m_gridManager != nullptr, TEXT("ASimulationManager::OnGridGenerated - m_gridManager is now nullptr. This shouldn't happen")))
