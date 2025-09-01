@@ -27,7 +27,8 @@ private:
 
 	UPROPERTY(VisibleAnywhere)
 	TObjectPtr<UStaticMeshComponent> m_meshComponent;
+	UPROPERTY(EditAnywhere, DisplayName="Visual Reaction Length", meta = (Units="Seconds"))
+	float m_reactTime = 0.2f;
 
 	float m_elapsedTimeSinceLastMove = 0.0f;
-	float m_reactTime = 0.2f;
 };

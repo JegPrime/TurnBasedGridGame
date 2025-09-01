@@ -20,7 +20,6 @@ void UGridReactComponent::React()
 	PrimaryComponentTick.SetTickFunctionEnable(true);
 }
 
-
 void UGridReactComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -28,8 +27,6 @@ void UGridReactComponent::BeginPlay()
 	PrimaryComponentTick.SetTickFunctionEnable(false);
 }
 
-
-// Called every frame
 void UGridReactComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);

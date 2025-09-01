@@ -56,6 +56,7 @@ private:
 public:
 	UPROPERTY()
 	TScriptInterface<IGridSystem> m_gridSystem = nullptr;
+	UPROPERTY(VisibleAnywhere, Category="GridManager")
 	bool m_isGridGenerated = false;
 
 private:

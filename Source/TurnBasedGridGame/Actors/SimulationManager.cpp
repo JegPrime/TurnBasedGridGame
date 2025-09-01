@@ -99,8 +99,14 @@ void ASimulationManager::Initialize()
 	{
 		return;
 	}
+	
+	if (!ensureMsgf(m_gridManager->m_gridSystem != nullptr, TEXT("ASimulationManager::Initialize - m_gridSystem is not set")))
+	{
+		return;
+	}
 
 	//Spawn Teams
+	//TODO: Move actor spawning to GridManager, since we should only care about metadata here.
 	for (int team = 0; team < static_cast<int>(EGridObjectTeam::Count); ++team)
 	{
 		const EGridObjectTeam gridTeam = static_cast<EGridObjectTeam>(team);
@@ -124,7 +130,8 @@ void ASimulationManager::Initialize()
 				{
 					potentialSpawnCoords.RemoveAtSwap(randomIndex);
 					gridTeamObjectArray.Add(spawnedGridActor);
-
+					spawnedGridActor->AttachToActor(m_gridManager, FAttachmentTransformRules::KeepWorldTransform);
+					spawnedGridActor->SetActorLabel(FString::Format(TEXT("GridObject_{0}_{1}"), {UEnum::GetDisplayValueAsText(gridTeam).ToString(),i}));
 					if (UStaticMeshComponent* mesh = spawnedGridActor->GetComponentByClass<UStaticMeshComponent>())
 					{
 						mesh->SetCustomPrimitiveDataFloat(0, team);
