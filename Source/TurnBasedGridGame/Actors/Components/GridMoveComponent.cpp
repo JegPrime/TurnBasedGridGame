@@ -18,6 +18,7 @@ void UGridMoveComponent::StartMove(const FVector& _oldLocation, const FVector& _
 	}
 	
 	PrimaryComponentTick.SetTickFunctionEnable(true);
+	m_elapsedTimeSinceLastMove = 0.0f;
 	m_oldLocation = _oldLocation;
 	m_newLocation = _newLocation;
 	m_time = _time;

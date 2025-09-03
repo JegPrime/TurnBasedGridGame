@@ -116,10 +116,10 @@ protected:
 private:
 	void CreateGridManager();
 	void Initialize();
-	void UpdateSimulation();
+	void UpdateSimulation(const float _deltaTime);
 	void UpdateSimulationMovements(TArray<FGridObjectSimulationData>& _simObjects, const TArray<FGridObjectSimulationData>& _simulationState);
 	void UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& _simObjects, const TArray<FGridObjectSimulationData>& _currentSimulationState);
-	void ReadSimulationData(); //Reads current simulation state and issues commands to update objects accordingly
+	void ReadSimulationData(const float _deltaTime); //Reads current simulation state and issues commands to update objects accordingly
 	bool AddSimulationObject(TSubclassOf<AGridObject> _gridObjectBP, FIntVector2 _coords, EGridObjectTeam _team);
 	void RemoveSimulationObject(GridID _id);
 	FIntVector2 GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _simulationData, const TArray<FGridObjectSimulationData>& _simulationState) const;

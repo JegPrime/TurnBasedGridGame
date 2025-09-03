@@ -8,12 +8,12 @@
 ASimulationManager::ASimulationManager()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = m_simulationTickTime;
 }
 
 void ASimulationManager::BeginPlay()
 {
 	Super::BeginPlay();
+	SetActorTickInterval(m_simulationTickTime);
 
 	if (m_gridManager != nullptr)
 	{
@@ -36,7 +36,7 @@ void ASimulationManager::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	UpdateSimulation();
+	UpdateSimulation(DeltaTime);
 }
 
 void ASimulationManager::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -130,7 +130,7 @@ void ASimulationManager::Initialize()
 	}
 }
 
-void ASimulationManager::UpdateSimulation()
+void ASimulationManager::UpdateSimulation(const float _deltaTime)
 {
 	m_simulationGridState.Empty();
 	for (auto data : m_simulationStateData)
@@ -141,7 +141,7 @@ void ASimulationManager::UpdateSimulation()
 	UpdateSimulationMovements(m_simulationStateData, m_simulationStateData);
 	UpdateSimulationAttacks(m_simulationStateData, m_simulationStateData);
 
-	ReadSimulationData();
+	ReadSimulationData(_deltaTime);
 }
 
 UE_DISABLE_OPTIMIZATION
@@ -224,13 +224,13 @@ void ASimulationManager::UpdateSimulationAttacks(TArray<FGridObjectSimulationDat
 }
 UE_ENABLE_OPTIMIZATION
 
-void ASimulationManager::ReadSimulationData()
+void ASimulationManager::ReadSimulationData(const float _deltaTime)
 {
 	for (auto [gridID, coords] : m_simulationMoveData)
 	{
 		if (TObjectPtr<AGridObject> gridObject = m_IDtoObjectMap.FindRef(gridID))
 		{
-			gridObject->Move(m_gridManager->GetTileLocation(coords), m_simulationTickTime);
+			gridObject->Move(m_gridManager->GetTileLocation(coords), _deltaTime);
 		}
 	}
 
