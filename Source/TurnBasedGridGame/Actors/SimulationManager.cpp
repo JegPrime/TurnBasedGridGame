@@ -61,7 +61,7 @@ void ASimulationManager::TestHitActor()
 {
 	if (TObjectPtr<AGridObject> gridObject = m_gridObjectsMap.FindOrAdd(EGridObjectTeam::Red).Last())
 	{
-		gridObject->GetHit();
+		gridObject->OnReceiveHit();
 	}
 }
 
@@ -240,9 +240,8 @@ void ASimulationManager::ReadSimulationData(const float _deltaTime)
 		TObjectPtr<AGridObject> target = m_IDtoObjectMap.FindRef(targetID);
 		if (attacker != nullptr && target != nullptr)
 		{
-			target->GetHit();
-			// attacker attack
-			// target get hit
+			attacker->OnAttack(target->GetActorLocation(), _deltaTime);
+			target->OnReceiveHit();
 		}
 	}
 

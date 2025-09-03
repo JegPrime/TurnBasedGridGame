@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/GridReactComponent.h"
+#include "Components/GridMoveComponent.h"
 #include "GameFramework/Actor.h"
 #include "GridObject.generated.h"
 
-class UGridMoveComponent;
+
 
 UCLASS()
 class TURNBASEDGRIDGAME_API AGridObject : public AActor
@@ -19,10 +20,15 @@ public:
 
 	virtual bool IsBlocker() const { return true; }
 	void Move(const FVector& _newLocation, const float _time);
-	void GetHit();
+	void OnReceiveHit();
+	void OnAttack(FVector _targetLocation, const float _time);
+	
 	int GetGridID() const { return m_gridID; }
 	void SetGridID(int _id) { m_gridID = _id; }
-
+	
+	UFUNCTION(BlueprintImplementableEvent)
+	void AttackBP(const float _time);
+	
 protected:
 	UPROPERTY(EditAnywhere)
 	TObjectPtr<UGridMoveComponent> m_moveComponent;

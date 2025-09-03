@@ -3,6 +3,7 @@
 
 #include "GridObject.h"
 #include "Components/GridMoveComponent.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 // Sets default values
@@ -26,11 +27,17 @@ void AGridObject::Move(const FVector& _newLocation, const float _time)
 	}
 }
 
-void AGridObject::GetHit()
+void AGridObject::OnReceiveHit()
 {
 	if (ensureMsgf(m_reactComponent != nullptr, TEXT("AGridObject::GetHit - m_reactComponent isn't initialized")))
 	{
 		m_reactComponent->React();
 	}
+}
+
+void AGridObject::OnAttack(FVector _targetLocation, const float _time)
+{
+	SetActorRotation(UKismetMathLibrary::FindLookAtRotation(GetActorLocation(), _targetLocation));
+	AttackBP(_time);
 }
 
