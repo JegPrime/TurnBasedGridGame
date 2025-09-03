@@ -17,9 +17,11 @@ class TURNBASEDGRIDGAME_API AGridObject : public AActor
 public:
 	AGridObject();
 
-	virtual bool IsBlocker() { return true; }
+	virtual bool IsBlocker() const { return true; }
 	void Move(const FVector& _newLocation, const float _time);
 	void GetHit();
+	int GetGridID() const { return m_gridID; }
+	void SetGridID(int _id) { m_gridID = _id; }
 
 protected:
 	UPROPERTY(EditAnywhere)
@@ -28,5 +30,6 @@ protected:
 	TObjectPtr<UStaticMeshComponent> m_staticMeshComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<UGridReactComponent> m_reactComponent;
-	
+
+	int m_gridID = 0;
 };

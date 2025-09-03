@@ -25,7 +25,7 @@ private:
 	
 	void UpdateReact(float _deltaTime);
 
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY()
 	TObjectPtr<UStaticMeshComponent> m_meshComponent;
 	UPROPERTY(EditAnywhere, DisplayName="Visual Reaction Length", meta = (Units="Seconds"))
 	float m_reactTime = 0.2f;

@@ -9,6 +9,8 @@
 
 class AGridManager;
 
+typedef int GridID;
+
 UENUM()
 enum class EGridObjectTeam : uint8
 {
@@ -16,6 +18,31 @@ enum class EGridObjectTeam : uint8
 	Blue,
 	Count UMETA(Hidden)
 };
+
+USTRUCT()
+struct FGridObjectSimulationData
+{
+	GENERATED_BODY()
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	FIntVector2 m_coords = FIntVector2::ZeroValue;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	FIntVector2 m_targetCoords = FIntVector2::ZeroValue;
+	UPROPERTY(EditDefaultsOnly, Category = "Movement")
+	int m_moveSpeed = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	EGridObjectTeam m_team = EGridObjectTeam::Red;
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	int m_health = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	int m_damage = 0;
+	UPROPERTY(EditDefaultsOnly, Category = "Attack")
+	int m_range = 0;
+	//Uproperty doesn't like typedef
+	GridID m_gridID = 0;
+};
+
+
 
 UCLASS()
 class TURNBASEDGRIDGAME_API ASimulationManager : public AActor
@@ -58,10 +85,20 @@ protected:
 private:
 	void CreateGridManager();
 	void Initialize();
-	void AddSimulationObject();
+	void UpdateSimulation();
+	void UpdateSimulationMovements(TArray<FGridObjectSimulationData>& simObjects, const TArray<FGridObjectSimulationData>& currentSimulationState);
+	void UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& simObjects, const TArray<FGridObjectSimulationData>& currentSimulationState);
+	void ReadSimulationData(); //Reads current simulation state and issues commands to update objects accordingly
+	bool AddSimulationObject(TSubclassOf<AGridObject> _gridObjectBP, FIntVector2 _coords, EGridObjectTeam _team);
 	void MoveSimulationObject();
 	void RemoveSimulationObject();
+	FIntVector2 GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _gridObjectData, const TArray<FGridObjectSimulationData>& _currentSimulationState) const;
+	TArray<FIntVector2> GetPathToCoords(FIntVector2 _from, FIntVector2 _to) const;
 
 private:
 	TMap<EGridObjectTeam, TArray<TObjectPtr<AGridObject>>> m_gridObjectsMap;
+	TMap<GridID, TObjectPtr<AGridObject>> m_IDtoObjectMap;
+	TMap<FIntVector2, FGridObjectSimulationData> m_simulationData;
+	
+	GridID m_uniqueGridObjectIDs = 0;
 };

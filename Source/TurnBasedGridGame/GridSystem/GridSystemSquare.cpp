@@ -53,7 +53,7 @@ TArray<FIntVector2> UGridSystemSquare::GetNeighbourCoords(const FIntVector2& _co
 	TArray<FIntVector2> result;
 	for (auto direction : GetNeighbourDirections())
 	{
-		if (IsCoordValid(_coord))
+		if (IsCoordValid(_coord + direction))
 		{
 			result.Add(_coord + direction);
 		}
