@@ -132,90 +132,166 @@ void ASimulationManager::Initialize()
 
 void ASimulationManager::UpdateSimulation()
 {
-	TArray<FGridObjectSimulationData> gridObjectsToSimulate;
-	m_simulationData.GenerateValueArray(gridObjectsToSimulate);
-	const TArray<FGridObjectSimulationData> currentSimulationState = gridObjectsToSimulate;
-	UpdateSimulationMovements(gridObjectsToSimulate, currentSimulationState);
-	UpdateSimulationAttacks(gridObjectsToSimulate, currentSimulationState);
+	m_simulationGridState.Empty();
+	for (auto data : m_simulationStateData)
+	{
+		m_simulationGridState.Add(data.m_coords, data);
+	}
+
+	UpdateSimulationMovements(m_simulationStateData, m_simulationStateData);
+	UpdateSimulationAttacks(m_simulationStateData, m_simulationStateData);
+
+	ReadSimulationData();
 }
 
 UE_DISABLE_OPTIMIZATION
-void ASimulationManager::UpdateSimulationMovements(TArray<FGridObjectSimulationData>& simData, const TArray<FGridObjectSimulationData>& currentSimulationState)
+void ASimulationManager::UpdateSimulationMovements(TArray<FGridObjectSimulationData>& _simulationData, const TArray<FGridObjectSimulationData>& _simulationState)
 {
-	for (int i = simData.Num() - 1; i >= 0; --i)
+	m_simulationMoveData.Empty();
+	for (int i = _simulationData.Num() - 1; i >= 0; --i)
 	{
-		FGridObjectSimulationData& currentSimObject = simData[i];
-		FIntVector2 closestEnemyCoords = GetClosestEnemyGridDataCoords(currentSimObject, currentSimulationState);
+		FGridObjectSimulationData& currentSimObject = _simulationData[i];
+		currentSimObject.m_hasMoved = false;
+		FIntVector2 closestEnemyCoords = GetClosestEnemyGridDataCoords(currentSimObject, _simulationState);
 		TArray<FIntVector2> path = GetPathToCoords(currentSimObject.m_coords, closestEnemyCoords);
-		if (path.Num() > 0)
+		if (path.Num() > 0 && currentSimObject.m_moveSpeed > 0)
 		{
-			FIntVector2 newTile = path[0];
-			//TODO: Remove after we have proper pathing
-			if (m_simulationData.Find(newTile))
+			const int tilesMoved = FMath::Min(path.Num(), currentSimObject.m_moveSpeed) - 1;
+			FIntVector2 newTile = path[tilesMoved];
+			
+			//TODO: Remove after we have proper pathing. We're checking for other objects here.
+			if (m_simulationGridState.Find(newTile))
 			{
 				continue;
 			}
-			
-			if (TObjectPtr<AGridObject> gridObject = m_IDtoObjectMap.FindRef(currentSimObject.m_gridID))
-			{
-				gridObject->Move(m_gridManager->GetTileLocation(newTile), m_simulationTickTime);
-			}
 
-			FGridObjectSimulationData newSimObject = currentSimObject;
-			newSimObject.m_coords = newTile;
-			m_simulationData.Remove(currentSimObject.m_coords);
-			m_simulationData.Add(newTile, newSimObject);
+			//TODO: Add all the moved tiles as checkpoints for final movement
+			m_simulationMoveData.Add(FSimMoveData(currentSimObject.m_gridID, newTile));
+			currentSimObject.m_hasMoved = true;
+
+			m_simulationGridState.Remove(currentSimObject.m_coords);
+			currentSimObject.m_coords = newTile;
+			m_simulationGridState.Add(newTile, currentSimObject);
+		}
+	}
+}
+
+
+void ASimulationManager::UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& _simData, const TArray<FGridObjectSimulationData>& _currentSimulationState)
+{
+	m_simulationAttackData.Empty();
+	m_simulationDeathData.Empty();
+	for (auto simData : _currentSimulationState)
+	{
+		if (simData.m_hasMoved)
+		{
+			continue;
+		}
+
+		for (FIntVector2 neighbourCoords : m_gridManager->m_gridSystem->GetNeighbourCoords(simData.m_coords))
+		{
+			if (FGridObjectSimulationData* neighbourSimData = m_simulationGridState.Find(neighbourCoords))
+			{
+				if (!neighbourSimData->m_hasMoved && simData.m_team != neighbourSimData->m_team)
+				{
+					m_simulationAttackData.Add(FSimAttackData(simData.m_gridID, neighbourSimData->m_gridID));
+
+					if (neighbourSimData->m_health <= simData.m_damage)
+					{
+						neighbourSimData->m_health = 0;
+						m_simulationDeathData.AddUnique(FSimDeathData(neighbourSimData->m_gridID));
+					}
+					else
+					{
+						neighbourSimData->m_health -= simData.m_damage;
+					}
+				}
+			}	
+		}
+	}
+
+	for (auto [deathID] : m_simulationDeathData)
+	{
+		for (int i = m_simulationStateData.Num() - 1; i >= 0; --i)
+		{
+			if (deathID == m_simulationStateData[i].m_gridID)
+			{
+				m_simulationStateData.RemoveAtSwap(i);
+				break;
+			}
 		}
 	}
 }
 UE_ENABLE_OPTIMIZATION
 
-void ASimulationManager::UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& simData, const TArray<FGridObjectSimulationData>& currentSimulationState)
+void ASimulationManager::ReadSimulationData()
 {
-	
+	for (auto [gridID, coords] : m_simulationMoveData)
+	{
+		if (TObjectPtr<AGridObject> gridObject = m_IDtoObjectMap.FindRef(gridID))
+		{
+			gridObject->Move(m_gridManager->GetTileLocation(coords), m_simulationTickTime);
+		}
+	}
+
+	for (auto [attackerID, targetID] : m_simulationAttackData)
+	{
+		TObjectPtr<AGridObject> attacker = m_IDtoObjectMap.FindRef(attackerID);
+		TObjectPtr<AGridObject> target = m_IDtoObjectMap.FindRef(targetID);
+		if (attacker != nullptr && target != nullptr)
+		{
+			target->GetHit();
+			// attacker attack
+			// target get hit
+		}
+	}
+
+	for (auto [deathID] : m_simulationDeathData)
+	{
+		RemoveSimulationObject(deathID);
+	}
 }
 
 bool ASimulationManager::AddSimulationObject(TSubclassOf<AGridObject> _gridObjectBP, FIntVector2 _coords, EGridObjectTeam _team)
 {
 	TArray<TObjectPtr<AGridObject>>& gridTeamObjectArray = m_gridObjectsMap.FindOrAdd(_team);
 	const FVector spawnPointLocation = m_gridManager->GetTileLocation(_coords);
+	
 	TObjectPtr<AGridObject> spawnedGridActor = Cast<AGridObject>(GetWorld()->SpawnActor(_gridObjectBP, &spawnPointLocation));
-	if (!ensureMsgf(spawnedGridActor != nullptr, TEXT("ASimulationManager::Initialize - Spawned actor is nullptr")))
+	if (!ensureMsgf(spawnedGridActor != nullptr, TEXT("ASimulationManager::AddSimulationObject - Spawned actor is nullptr")))
 	{
 		return false;
 	}
+	gridTeamObjectArray.Add(spawnedGridActor);
 
 	GridID newID = m_uniqueGridObjectIDs++;
 	spawnedGridActor->SetGridID(newID);
-	gridTeamObjectArray.Add(spawnedGridActor);
 	spawnedGridActor->AttachToActor(m_gridManager, FAttachmentTransformRules::KeepWorldTransform);
 	spawnedGridActor->SetActorLabel(FString::Format(TEXT("GridObject_{0}_{1}"), {UEnum::GetDisplayValueAsText(_team).ToString(),newID}));
 	if (UStaticMeshComponent* mesh = spawnedGridActor->GetComponentByClass<UStaticMeshComponent>())
 	{
 		mesh->SetCustomPrimitiveDataFloat(0, static_cast<int>(_team));
 	}
-	FGridObjectSimulationData simulationData;
-	simulationData.m_gridID = newID;
-	simulationData.m_coords = _coords;
-	simulationData.m_moveSpeed = 1;
-	simulationData.m_team = _team;
-	m_simulationData.Add(_coords, simulationData);
+
+	//TODO: Move magic numbers into dataAsset
+	FGridObjectSimulationData simulationData(_coords, 1, _team, 5, 2, 0, newID);
+	m_simulationStateData.Add(simulationData);
 	m_IDtoObjectMap.Add(simulationData.m_gridID, spawnedGridActor);
 	
 	return true;
 }
 
-void ASimulationManager::MoveSimulationObject()
+void ASimulationManager::RemoveSimulationObject(GridID _id)
 {
-	
+	if (TObjectPtr<AGridObject> gridObject = m_IDtoObjectMap.FindRef(_id))
+	{
+		//TODO: Call a method on actor to do death VFX and stuff
+		gridObject->Destroy();
+		m_IDtoObjectMap.Remove(_id);
+	}
 }
 
-void ASimulationManager::RemoveSimulationObject()
-{
-	
-}
-
-FIntVector2 ASimulationManager::GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _gridObjectData, const TArray<FGridObjectSimulationData>& _currentSimulationState) const
+FIntVector2 ASimulationManager::GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _simulationData, const TArray<FGridObjectSimulationData>& _simulationState) const
 {
 	if (m_gridManager == nullptr || m_gridManager->m_gridSystem == nullptr)
 	{
@@ -224,14 +300,14 @@ FIntVector2 ASimulationManager::GetClosestEnemyGridDataCoords(const FGridObjectS
 	
 	int closestTileDistance = std::numeric_limits<int>::max();
 	FIntVector2 closestCoords = FIntVector2::NoneValue;
-	for (auto otherSimData : _currentSimulationState)
+	for (auto otherSimData : _simulationState)
 	{
-		if (_gridObjectData.m_team == otherSimData.m_team)
+		if (_simulationData.m_team == otherSimData.m_team)
 		{
 			continue;
 		}
 
-		const int tileDistance = m_gridManager->m_gridSystem->GetDistance(_gridObjectData.m_coords, otherSimData.m_coords);
+		const int tileDistance = m_gridManager->m_gridSystem->GetDistance(_simulationData.m_coords, otherSimData.m_coords);
 		if (tileDistance < closestTileDistance)
 		{
 			closestTileDistance = tileDistance;
@@ -256,7 +332,17 @@ TArray<FIntVector2> ASimulationManager::GetPathToCoords(FIntVector2 _from, FIntV
 	int crtDist =  m_gridManager->m_gridSystem->GetDistance(_from, _to);
 	for (auto coord : m_gridManager->m_gridSystem->GetNeighbourCoords(_from))
 	{
-		if (m_gridManager->m_gridSystem->GetDistance(coord, _to) < crtDist)
+		if (m_gridManager->m_gridSystem->GetDistance(coord, _to) < crtDist
+			&& !m_simulationGridState.Contains(coord))
+		{
+			return {coord};
+		}
+	}
+
+	for (auto coord : m_gridManager->m_gridSystem->GetNeighbourCoords(_from))
+	{
+		if (m_gridManager->m_gridSystem->GetDistance(coord, _to) <= crtDist
+			&& !m_simulationGridState.Contains(coord))
 		{
 			return {coord};
 		}

@@ -27,8 +27,6 @@ struct FGridObjectSimulationData
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	FIntVector2 m_coords = FIntVector2::ZeroValue;
 	UPROPERTY(EditDefaultsOnly, Category = "Movement")
-	FIntVector2 m_targetCoords = FIntVector2::ZeroValue;
-	UPROPERTY(EditDefaultsOnly, Category = "Movement")
 	int m_moveSpeed = 0;
 	UPROPERTY(EditDefaultsOnly, Category = "Attack")
 	EGridObjectTeam m_team = EGridObjectTeam::Red;
@@ -40,8 +38,41 @@ struct FGridObjectSimulationData
 	int m_range = 0;
 	//Uproperty doesn't like typedef
 	GridID m_gridID = 0;
+
+	UPROPERTY(Transient)
+	bool m_hasMoved = true;
 };
 
+USTRUCT()
+struct FSimMoveData
+{
+	GENERATED_BODY()
+	
+	GridID m_gridObjectID = 0;
+	FIntVector2 m_newCoords = FIntVector2::ZeroValue;
+};
+
+USTRUCT()
+struct FSimAttackData
+{
+	GENERATED_BODY()
+	
+	GridID m_attackerID = 0;
+	GridID m_targetID = 0;
+};
+
+USTRUCT()
+struct FSimDeathData
+{
+	GENERATED_BODY()
+	
+	GridID m_deathID = 0;
+
+	bool operator==(const FSimDeathData& other) const
+	{
+		return m_deathID == other.m_deathID;
+	}
+};
 
 
 UCLASS()
@@ -86,19 +117,27 @@ private:
 	void CreateGridManager();
 	void Initialize();
 	void UpdateSimulation();
-	void UpdateSimulationMovements(TArray<FGridObjectSimulationData>& simObjects, const TArray<FGridObjectSimulationData>& currentSimulationState);
-	void UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& simObjects, const TArray<FGridObjectSimulationData>& currentSimulationState);
+	void UpdateSimulationMovements(TArray<FGridObjectSimulationData>& _simObjects, const TArray<FGridObjectSimulationData>& _simulationState);
+	void UpdateSimulationAttacks(TArray<FGridObjectSimulationData>& _simObjects, const TArray<FGridObjectSimulationData>& _currentSimulationState);
 	void ReadSimulationData(); //Reads current simulation state and issues commands to update objects accordingly
 	bool AddSimulationObject(TSubclassOf<AGridObject> _gridObjectBP, FIntVector2 _coords, EGridObjectTeam _team);
-	void MoveSimulationObject();
-	void RemoveSimulationObject();
-	FIntVector2 GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _gridObjectData, const TArray<FGridObjectSimulationData>& _currentSimulationState) const;
+	void RemoveSimulationObject(GridID _id);
+	FIntVector2 GetClosestEnemyGridDataCoords(const FGridObjectSimulationData& _simulationData, const TArray<FGridObjectSimulationData>& _simulationState) const;
 	TArray<FIntVector2> GetPathToCoords(FIntVector2 _from, FIntVector2 _to) const;
 
 private:
 	TMap<EGridObjectTeam, TArray<TObjectPtr<AGridObject>>> m_gridObjectsMap;
 	TMap<GridID, TObjectPtr<AGridObject>> m_IDtoObjectMap;
-	TMap<FIntVector2, FGridObjectSimulationData> m_simulationData;
-	
 	GridID m_uniqueGridObjectIDs = 0;
+
+	//--- Info "from server" ---
+	TArray<FGridObjectSimulationData> m_simulationStateData;
+	TArray<FSimMoveData> m_simulationMoveData;
+	TArray<FSimAttackData> m_simulationAttackData;
+	TArray<FSimDeathData> m_simulationDeathData;
+	//--------------------------
+
+	//--- Server side info ---
+	TMap<FIntVector2, FGridObjectSimulationData> m_simulationGridState;
+	//------------------------
 };
